@@ -14,15 +14,15 @@ degrees = pi/180;
 % SOURCE PARAMETERS
 lam0 = 2.7; %free space wavelength 
 % k0 = 2 * pi /lam0
-theta = 57 * degrees; %elevation angle
+theta = 0 * degrees; %elevation angle
 phi = 23 * degrees; %azimuthal angle
 pte = 1/sqrt(2); %amplitude of TE polarization
 ptm = 1i/sqrt(2); %amplitude of TM polarization
 % EXTERNAL MATERIALS
 ur1 = 1.2; %permeability in the reflection region
 er1 = 1.4; %permittivity in the reflection region
-ur2 = 1.6; %permeability in the transmission region
-er2 = 1.8; %permittivity in the transmission region
+ur2 = 1.2; %permeability in the transmission region
+er2 = 1.4; %permittivity in the transmission region
 % DEFINE LAYERS
 UR = [ 1 3 ]; %array of permeabilities in each layer
 ER = [ 2 1 ]; %array of permittivities in each layer
@@ -71,22 +71,22 @@ for i = 1:N_layer
     OMEGAi = 1i * kzti(i) * eye(size(Qi))
     Vi = Qi / OMEGAi
     % CALCULATE SCATTERING MATRIX FOR LAYER I
-    Ai = eye(size(Vi)) + inv(Vi) * VG
-    Bi = eye(size(Vi)) - inv(Vi) * VG
+    Ai = eye(size(Vi)) + Vi \ VG
+    Bi = eye(size(Vi)) - Vi \ VG
 %     [Eig_v, ~] = eig(Qi)
     Xi = expm(OMEGAi * k0 * L(i) * lam0)   
-    D = Ai - Xi * Bi / Ai * Xi * Bi
-    S11 = D \ (Xi * Bi / Ai * Xi * Ai - Bi)
+    D = Ai - Xi * (Bi / Ai) * Xi * Bi
+    S11 = D \ (Xi * (Bi / Ai) * Xi * Ai - Bi)
     
-    S12 = D \ Xi * (Ai - Bi / Ai * Bi)
+    S12 = D \ (Xi * (Ai - (Bi / Ai) * Bi))
     S21 = S12
     S22 = S11
     
     % UPDATE GLOABAL SCATTERING MATRIX
 %     Dg = S12g \ (I - S11 * S22g)
-    DG = S12G * inv(I - S11 * S22G)
+    DG = S12G / (I - S11 * S22G)
 %     Fg = S21 \ (I - S22g * S11)
-    FG = S21 * inv(I - S22G * S11)
+    FG = S21 / (I - S22G * S11)
     
     S11G = S11G + DG * S11 * S21G
     S12G = DG *  S12
@@ -108,13 +108,13 @@ QR = 1 / ur1 * [kxt * kyt   ur1 * er1 - kxt^2;
 OMEGAR = 1i * kztR * eye(size(QR))
 VR = QR / OMEGAR
 
-AR = eye(size(VR)) + inv(VG) * VR
-BR = eye(size(VR)) - inv(VG) * VR
+AR = eye(size(VR)) + VG \ VR
+BR = eye(size(VR)) - VG \ VR
 
 
 S11R = -AR \ BR 
 S12R = 2 * inv(AR) 
-S21R = 0.5 * ( AR - BR * inv(AR) * BR)
+S21R = 0.5 * ( AR - (BR / AR) * BR)
 S22R = BR / AR
 
 %% CALCULATE SCATTERING MATRIX FOR TRANSMISSION REGION
@@ -123,20 +123,20 @@ QT = 1 / ur2 * [kxt * kyt   ur2 * er2 - kxt^2;
                     kyt^2 - ur2 * er2  -kxt * kyt;]
 OMEGAT = 1i * kztT * eye(size(QT))
 VT = QT / OMEGAT
-AT = eye(size(VT)) + inv(VG) * VT
-BT = eye(size(VT)) - inv(VG) * VT
+AT = eye(size(VT)) + VG \ VT
+BT = eye(size(VT)) - VG \ VT
 
 
 S11T = BT / AT
-S12T = 0.5 * ( AT - BT * inv(AT) * BT)
+S12T = 0.5 * ( AT - (BT / AT) * BT)
 S21T = 2 * inv(AT) 
 S22T = -AT \ BT
 
 %% CONNECT TO EXTERNAL REGIONS
 
 % SG = SR ? SG
-DR = S12R * inv(I - S11G * S22R)
-FR = S21G * inv(I - S22R * S11G)
+DR = S12R / (I - S11G * S22R)
+FR = S21G / (I - S22R * S11G)
 
 S22G = S22G + FR * S22R * S12G
 S21G = FR * S21R
@@ -145,8 +145,8 @@ S11G = S11R + DR * S11G * S21R
 
 
 % SG = SG ? ST
-DG = S12G * inv(I - S11T * S22G)
-FG = S21T * inv(I - S22G * S11T)
+DG = S12G / (I - S11T * S22G)
+FG = S21T / (I - S22G * S11T)
 
 S11G = S11G + DG * S11T * S21G
 S12G = DG *  S12T

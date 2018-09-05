@@ -21,7 +21,7 @@ ptm = 1i/sqrt(2); %amplitude of TM polarization
 % EXTERNAL MATERIALS
 ur1 = 1.2; %permeability in the reflection region
 er1 = 1.4; %permittivity in the reflection region
-ur2 = 1.6; %permeability in the transmission region
+ur2 = 1.2; %permeability in the transmission region
 er2 = 1.8; %permittivity in the transmission region
 % DEFINE LAYERS
 UR = [ 1 3 ]; %array of permeabilities in each layer
