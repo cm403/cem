@@ -33,12 +33,12 @@ src.ptm = 0;%1/sqrt(2); %amplitude of TM polarization
 
 % EXTERNAL MATERIALS
 dev.ur1 = 1 * ( Z0 / Z0)^2; %permeability in the reflection region
-dev.er1 = 1 / ( 50 / Z0)^2; %permittivity in the reflection region
+dev.er1 = 1 / ( Z0 / Z0)^2; %permittivity in the reflection region
 dev.ur2 = 1 * ( Z0 / Z0)^2; %permeability in the transmission region
-dev.er2 = 1 / ( 100 / Z0)^2; %permittivity in the transmission region
+dev.er2 = 1 / ( Z0 / Z0)^2; %permittivity in the transmission region
 % DEFINE LAYERS
-dev.UR = [ 1 2 1 1]; %array of permeabilities in each layer
-dev.ER = [ 2 3 6 20]; %array of permittivities in each layer
+dev.UR = [ 1 1 1 1]; %array of permeabilities in each layer
+dev.ER = [ 1 80 2 1]; %array of permittivities in each layer
 % dev.ER = [ 1 / ( sqrt(50*100) / Z0)^2]; %array of permittivities in each layer
 
 % % EXTERNAL MATERIALS
@@ -68,7 +68,7 @@ S21 = nan(size(f));
 S22 = nan(size(f));
 
 % dev.L = c0 / 10e9 * .25 * ( 1 / sqrt(dev.UR * dev.ER) );
-dev.L = [ 1.4 5 1 4]/ 1000 ;
+dev.L = [ 2 2 2 2] ;
 
 for i = 50%1:size(f,2)
     
@@ -103,3 +103,55 @@ h1.SubLineType %= ':'
 hold on
 % plot(S11,'*')
 % plot(S22,'*')
+
+
+Psi_minus = dat.Psi_minus;
+Psi_plus = dat.Psi_plus;
+Psi = dat.Psi;
+zdist = [];
+flds = [];
+figure(3)
+clf
+for j = 0:-.1:-10*pi
+    zdist = [];
+    flds = [];
+    flds_minus = [];
+    flds_plus = [];
+    for i = 1:size(Psi,3)
+        lami =  c0 * 1/sqrt(dev.UR(i)*dev.ER(i))/f(50);
+        txt = sprintf('\\lambda = %.2f',lami);
+
+    %     subplot(size(Psi,3), 1, i)
+        if i == 1
+            z_off = 0;
+        else
+            z_off = z_off + dev.L(i-1);
+        end
+        flds_minus = [flds_minus real(exp(1i*j)*Psi_minus(2,:,i))];
+        flds_plus = [flds_plus real(exp(1i*j)*Psi_plus(2,:,i))];
+        flds = [flds real(exp(1i*j)*Psi(2,:,i))];
+        
+        zdist = [zdist linspace(z_off,dev.L(i) + z_off,100)];
+        plot([z_off z_off], [-6 6],'k--','Linewidth',3)
+        hold on
+        x1 = pi;
+        y1 = sin(pi);
+        txtmed = sprintf('Medium %.f\n \\epsilon_r: %.1f\n\\mu_r: %.1f',i, dev.ER(i), dev.UR(i));
+        text(z_off + dev.L(i)/2,5,txtmed,'HorizontalAlignment','center')
+    %     plot(zdist,real(exp(1i*j)*Psi(2:3,:,i))')
+    %     hold on
+    %     title(txt)
+    %     ylim([-6 6])
+    end
+    subplot(3,1,1)
+    plot(zdist,flds,'k')
+    ylim([-6 6])
+    subplot(3,1,1)
+    plot(zdist,flds_plus)
+    ylim([-6 6])
+    subplot(3,1,1)
+    plot(zdist,flds_minus)
+    hold off
+    ylim([-6 6])
+    pause(0.1)
+end

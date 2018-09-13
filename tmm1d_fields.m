@@ -222,11 +222,30 @@ function DAT = tmm1d_fields(DEV,SRC)
             eEig = expm( [EIG(:,:,i) * zp(zind), zeros(2);...
                           zeros(2), -EIG(:,:,i) *  zp(zind)] );
             Psi(:,zind,i) = WV * eEig * c;
+            Psi_plus(:,zind,i) = WV * eEig * [c_plus(:,i); zeros(size(c_minus(:,i)))];
+            Psi_minus(:,zind,i) = WV * eEig * [zeros(size(c_plus(:,i))); c_minus(:,i)];
         end
         
     end
     
-    
+    for i = 1
+        z = linspace(0, L(i), 100);
+        zp = k0 * z;
+        c_minus(:,i) = cref;
+        c_plus(:,i)  = cinc;
+        
+        WV = [W(:,:,i), W(:,:,i);
+              V(:,:,i), -V(:,:,i)];
+        
+        c = [c_plus(:,i); c_minus(:,i)];
+        for zind = 1:size(zp,2)
+            eEig = expm( [EIG(:,:,i) * zp(zind), zeros(2);...
+                          zeros(2), -EIG(:,:,i) *  zp(zind)] );
+            Psi(:,zind,i) = WV * eEig * c;
+            Psi_plus(:,zind,i) = WV * eEig * [c_plus(:,i); zeros(size(c_minus(:,i)))];
+            Psi_minus(:,zind,i) = WV * eEig * [zeros(size(c_plus(:,i))); c_minus(:,i)];
+        end
+    end
     
    
     DAT.REF = norm(Eref).^2;
@@ -237,6 +256,9 @@ function DAT = tmm1d_fields(DEV,SRC)
     DAT.S12 = S12G;
     DAT.S21 = S21G;
     DAT.S22 = S22G;
+    DAT.Psi = Psi;
+    DAT.Psi_plus = Psi_plus;
+    DAT.Psi_minus = Psi_minus;
     
     
 end
